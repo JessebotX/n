@@ -68,6 +68,9 @@ CONFIG_DEFAULTS = {
 }
 
 def main():
+    """
+    Program's entry point
+    """
     if len(sys.argv) < 2:
         sys.exit(USAGE)
 
@@ -121,6 +124,9 @@ def read_config(path, opts):
     return config
 
 def parse_opts_root(*args):
+    """
+    Parse command line options (arguments that start with ‘--’)
+    """
     result = {}
     for arg in args:
         result[arg[0]] = {
