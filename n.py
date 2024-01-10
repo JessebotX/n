@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import pprint
+import subprocess
 import sys
+import traceback
 import yaml
 
 from pathlib import Path
@@ -78,30 +80,52 @@ def main():
     opts = parse_opts_root(*CONFIG_DEFAULTS.items())
 
     # get config
-    config = CONFIG_DEFAULTS
-    try:
-        path = Path(opts['config-file']['value']).expanduser()
-        config = read_config(path, opts)
-    except FileNotFoundError:
-        pass
-
-    pprint.pprint(config) # tmp
+    config_path = Path(opts['config-file']['value']).expanduser()
+    config = read_config(config_path, opts)
 
     if command == 'help' or command == '-h' or command == '--help':
         print(USAGE)
     elif command == 'version' or command == '-V' or command == '-v' or command == '--version':
         print(f'{NAME} v{VERSION}')
     elif command == 'new':
-        cmd_new(sys.argv[2:])
+        cmd_new(config, sys.argv[2:])
     else:
         sys.exit(f'ERROR: invalid command ‘{command}’. See the help command for more information.')
 
-def cmd_new(args):
+def cmd_new(config, args):
     """
     Create a new note entry
     """
-    print('Command ‘new’')
-    print('ARGS', args)
+    node_dir = get_new_node_dir(config['notes-dir'])
+
+    try:
+        Path(node_dir).mkdir(parents=True,exist_ok=True)
+    except:
+        traceback.print_exc()
+        sys.exit()
+
+    # parse args
+    title = "No title provided..." # Default title
+    for arg in args:
+        if not arg.startswith('--'):
+            title = arg
+            break
+
+    full_path = Path(node_dir, "README.org")
+    with open(str(full_path), 'w') as f:
+        f.write(f'#+title: {title}\n\n')
+
+    subprocess.run([config['editor'], full_path])
+    print(f'Created note at ‘{node_dir}’ with the title ‘{title}’')
+
+def get_new_node_dir(notes_dir):
+    i = 1
+    result = Path(notes_dir, str(i))
+    while result.is_dir():
+        i += 1
+        result = Path(notes_dir, str(i))
+
+    return str(result)
 
 def read_config(path, opts):
     """
@@ -111,8 +135,11 @@ def read_config(path, opts):
     opts: user-provided options returned by ‘parse_opts_root()’
     """
     config = {}
-    with open(path, 'r') as f:
-        config = yaml.safe_load(f)
+    try:
+        with open(path, 'r') as f:
+            config = yaml.safe_load(f)
+    except:
+        config = CONFIG_DEFAULTS
 
     overrides = {}
     for key, value in enumerate(opts):
@@ -120,6 +147,7 @@ def read_config(path, opts):
             overrides[value] = opts[value]['value']
 
     config = {**CONFIG_DEFAULTS, **config, **overrides}
+    config['notes-dir'] = Path(config['notes-dir']).expanduser()
 
     return config
 
