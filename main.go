@@ -3,14 +3,20 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
-const Version = "0.1.0"
-const UsageInfo = `
+const (
+	UserConfigDirBasename = "n"
+	LocalConfigFileBasename = "n.yml"
+	UserConfigFileBasename = "config.yml"
+	UsageInfo = `
 USAGE
 =====
 n <command> [options...]
 `
+	Version = "0.1.0"
+)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -35,7 +41,18 @@ func main() {
 }
 
 func commandNew(args []string) {
-	_ = ReadConfig()
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		exitWithMessage(1, err.Error())
+	}
+
+	configPath := filepath.Join(userConfigDir, UserConfigDirBasename, UserConfigFileBasename)
+	config, err := ReadConfig(configPath)
+	if err != nil {
+		exitWithMessage(1, err.Error())
+	}
+
+	fmt.Printf("%v\n", config)
 
 	fmt.Println("Create new command.")
 }
