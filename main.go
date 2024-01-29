@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 const (
@@ -69,7 +70,6 @@ func commandNew(args []string) {
 		Editor:          "vim",
 		DefaultNotesDir: "~/Documents/notes",
 	}
-
 	if len(opts["-d"]) > 0 {
 		config.DefaultNotesDir = opts["-d"]
 	}
@@ -84,7 +84,30 @@ func commandNew(args []string) {
 	fmt.Printf("OPTS: %v\n", opts)
 	fmt.Printf("ARGS: %v\n", nonOpts)
 
-	fmt.Println("TODO Create new command.")
+	//fmt.Println("TODO Create new command.")
+	entry, err := getNewNoteEntryDir(config.DefaultNotesDir)
+	if err != nil {
+		exitWithMessage(1, err.Error())
+	}
+
+	fmt.Println(entry)
+}
+
+func getNewNoteEntryDir(notesDir string) (string, error) {
+	i := 1
+	entryDir := filepath.Join(notesDir, strconv.Itoa(i))
+	for {
+		_, err := os.Stat(entryDir)
+
+		if os.IsNotExist(err) {
+			break
+		}
+
+		i++
+		entryDir = filepath.Join(notesDir, strconv.Itoa(i))
+	}
+
+	return entryDir, nil
 }
 
 func isNonOptArg(arg string, currentOpts map[string]string) bool {
