@@ -46,15 +46,55 @@ func commandNew(args []string) {
 		exitWithMessage(1, err.Error())
 	}
 
+	// parse opts
+	opts := make(map[string]string)
+	nonOpts := make([]string, 0)
+	for i, arg := range args {
+		if (arg == "-e" || arg == "--embed") && (len(args)-1) > i {
+			opts["-e"] = args[i+1]
+			continue
+		} else if (arg == "-r" || arg == "--reference") && (len(args)-1) > i  {
+			opts["-r"] = args[i+1]
+		} else if (arg == "-d" || arg == "--directory") && (len(args)-1) > i {
+			opts["-d"] = args[i+1]
+		} else {
+			if isNonOptArg(arg, opts) {
+				nonOpts = append(nonOpts, arg)
+			}
+		}
+	}
+
+	// get config
+	config := UserConfig{
+		Editor:          "vim",
+		DefaultNotesDir: "~/Documents/notes",
+	}
+
+	if len(opts["-d"]) > 0 {
+		config.DefaultNotesDir = opts["-d"]
+	}
+
 	configPath := filepath.Join(userConfigDir, UserConfigDirBasename, UserConfigFileBasename)
-	config, err := ReadConfig(configPath)
+	err = UnmarshalConfig(&config, configPath)
 	if err != nil {
 		exitWithMessage(1, err.Error())
 	}
 
-	fmt.Printf("%v\n", config)
+	fmt.Printf("CONFIG: %v\n", config)
+	fmt.Printf("OPTS: %v\n", opts)
+	fmt.Printf("ARGS: %v\n", nonOpts)
 
-	fmt.Println("Create new command.")
+	fmt.Println("TODO Create new command.")
+}
+
+func isNonOptArg(arg string, currentOpts map[string]string) bool {
+	for _, v := range currentOpts {
+		if v == arg {
+			return false
+		}
+	}
+
+	return true
 }
 
 func exitWithMessage(exitCode int, message string, args ...any) {
