@@ -10,9 +10,10 @@ import (
 )
 
 type UserConfig struct {
-	Editor          string   `yaml:"editor"`
-	EditorArgs      []string `yaml:"editorArgs"`
-	DefaultNotesDir string   `yaml:"defaultNotesDir"`
+	Editor                 string   `yaml:"editor"`
+	EditorArgs             []string `yaml:"editorArgs"`
+	DefaultNotesDir        string   `yaml:"defaultNotesDir"`
+	NoteEntryIndexFileName string   `yaml:"noteEntryIndexFileName"`
 }
 
 func UnmarshalConfig(config *UserConfig, path string) error {
